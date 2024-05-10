@@ -1,0 +1,255 @@
+---
+title: "Untitled"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-04-21"
+---
+
+```{r}
+library(readxl)
+BhamParking <- read_excel("BhamParking.xlsx")
+View(BhamParking)
+```
+
+
+
+```{r}
+
+
+# Summary statistics
+summary(BhamParking)
+
+# Get the first few rows of the dataset
+head(BhamParking)
+
+# Get the last few rows of the dataset
+tail(BhamParking)
+
+# Check for missing values
+any(is.na(BhamParking))
+
+# Remove rows with missing values
+BhamParking <- na.omit(BhamParking)
+
+
+
+```
+
+
+
+
+```{r}
+# 1. Generate descriptive statistics for the dataset, and comment on the main trends.
+# Descriptive Statistics
+
+# Load necessary libraries
+library(dplyr)
+
+# Generate descriptive statistics
+summary(BhamParking)
+
+# For categorical variables, you can use table() function
+table(BhamParking$per_occupancy)
+table(BhamParking$month)
+table(BhamParking$WorkingDay)
+table(BhamParking$period)
+
+# For numeric variables, you can use mean(), median(), sd(), min(), max(), etc.
+mean(BhamParking$Capacity)
+mean(BhamParking$Occupancy)
+mean(BhamParking$per_usage)
+
+
+
+```
+
+
+```{r}
+# 2. Check any records with missing values and handle the missing data as appropriate.
+
+# Check for missing values in the entire dataset
+any(is.na(BhamParking))
+
+# Check for missing values in each column
+colSums(is.na(BhamParking))
+
+# Handle Missing Values
+# Remove rows with any missing values
+BhamParking <- na.omit(BhamParking)
+
+# Impute missing values with mean (for numeric columns)
+BhamParking$Occupancy[is.na(BhamParking$Occupancy)] <- mean(BhamParking$Occupancy, na.rm = TRUE)
+
+# Impute missing values with mode (for categorical columns)
+BhamParking$WorkingDay[is.na(BhamParking$WorkingDay)] <- which.max(table(BhamParking$WorkingDay))
+
+# Check for missing values in the entire dataset
+any(is.na(BhamParking))
+
+# Check for missing values in each column
+colSums(is.na(BhamParking))
+
+
+
+```
+
+
+```{r}
+# 3.Build graphs visualizing the following and comment on the obtained visual insights the distribution of one or more individual continuous variables
+# the relationship of a pair of continuous variables the association b/w a categorical variable and a continuous one.
+
+library(ggplot2)
+
+# Histogram of Occupancy
+ggplot(BhamParking, aes(x = Occupancy)) +
+  geom_histogram(binwidth = 10, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Occupancy")
+
+
+# Scatter plot of Occupancy vs. per_usage
+ggplot(BhamParking, aes(x = per_usage, y = Occupancy)) +
+  geom_point(color = "skyblue") +
+  labs(title = "Relationship between per_usage and Occupancy",
+       x = "per_usage", y = "Occupancy")
+
+
+# Boxplot of Occupancy by period
+ggplot(BhamParking, aes(x = period, y = Occupancy, fill = period)) +
+  geom_boxplot() +
+  labs(title = "Association between period and Occupancy",
+       x = "Period", y = "Occupancy")
+
+
+
+```
+
+
+```{r}
+# 4. Display unique values of a categorical variable and their frequencies.
+
+# Display unique values and their frequencies for the WorkingDay variable
+table(BhamParking$WorkingDay)
+
+
+
+```
+
+
+```{r}
+# 5. Build a contingency table of two potentially related categorical variables. 
+# Conduct a statistical test of the independence between them and interpret the results.
+
+# Create a contingency table of WorkingDay and period
+contingency_table <- table(BhamParking$WorkingDay, BhamParking$period)
+
+# Display the contingency table
+contingency_table
+
+# Perform a chi-squared test of independence
+chi_sq_test <- chisq.test(contingency_table)
+
+# Display the results of the chi-squared test
+chi_sq_test
+
+
+
+
+```
+
+
+```{r}
+# 6. Retrieve one or more subset of rows based on two or more criteria and present descriptive statistics on the subset(s).
+
+# Subset of data for WorkingDay = "Yes" and period = "AM"
+subset1 <- subset(BhamParking, WorkingDay == "Yes" & period == "AM")
+
+# Subset of data for WorkingDay = "No" and period = "AM"
+subset2 <- subset(BhamParking, WorkingDay == "No" & period == "AM")
+
+# Calculate descriptive statistics for subset1
+summary(subset1)
+
+# Calculate descriptive statistics for subset2
+summary(subset2)
+
+
+
+```
+
+
+```{r}
+# 7. Conduct a statistical test of the significance of the difference 
+# between the means of two subsets of the data and interpret the results.
+
+# Assuming 'Occupancy' is the variable for which you want to compare means
+# Conduct a t-test
+t_test_result <- t.test(subset1$Occupancy, subset2$Occupancy)
+
+# Print the results
+print(t_test_result)
+
+# Conduct a Welch's t-test
+t_test_result <- t.test(subset1$Occupancy, subset2$Occupancy, var.equal = FALSE)
+
+# Print the results
+print(t_test_result)
+
+
+
+
+```
+
+
+```{r}
+# 8. Create one or more tables that group the data by a certain categorical variable and 
+# display summarized information for each group (e.g., the mean or sum within the group).
+
+library(dplyr)
+
+# Group the data by WorkingDay and calculate the mean Occupancy for each group
+summary_table <- BhamParking %>%
+  group_by(WorkingDay) %>%
+  summarise(mean_occupancy = mean(Occupancy))
+
+# Display the summary table
+print(summary_table)
+
+library(dplyr)
+
+# Select numeric columns
+numeric_cols <- c("Capacity", "Occupancy", "per_usage", "year", "hour")
+
+# Group the data by WorkingDay and calculate multiple summary statistics for numeric columns
+summary_table <- BhamParking %>%
+  group_by(WorkingDay) %>%
+  summarise(across(numeric_cols, list(mean = mean, sum = sum, median = median)))
+
+# Display the summary table
+print(summary_table)
+
+
+```
+
+```{r}
+# 9. Implement a linear regression model and interpret its output including its accuracy
+# Before you start to work on this assignment, please familiarise yourself with the detailed 
+# evaluation criteria for this assignment by studying the Courswork Brief (see above).
+
+# Fit the linear regression model
+model <- lm(Occupancy ~ per_usage, data = BhamParking)
+
+# Summarize the model
+summary(model)
+
+
+
+
+```
+
+
+
+
+
+
+
